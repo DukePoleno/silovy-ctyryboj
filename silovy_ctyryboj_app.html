@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Silový čtyřboj</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-authentication-library/2.38.3/msal-browser.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-dark: #1a3a5c;
+    --blue: #1e5799;
+    --blue-light: #2e86de;
+    --red: #c0392b;
+    --red-dark: #922b21;
+    --orange: #d35400;
+    --green: #27ae60;
+    --green-dark: #1e8449;
+    --purple: #7d3c98;
+    --gold: #f39c12;
+    --white: #ffffff;
+    --gray-light: #f0f4f8;
+    --gray: #b2bec3;
+    --text: #2d3436;
+    --shadow: 0 8px 32px rgba(0,0,0,0.25);
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--blue-dark);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 600px;
+    min-height: 100vh;
+    background: #0f2540;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* SCREENS */
+  .screen {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+    padding: 24px 20px 40px;
+    animation: fadeIn 0.2s ease;
+  }
+  .screen.active { display: flex; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* HEADER */
+  .screen-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding-top: 16px;
+  }
+
+  .back-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .back-btn:active { background: rgba(255,255,255,0.2); }
+
+  .screen-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+  .screen-title small {
+    display: block;
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.5);
+    text-transform: none;
+    letter-spacing: 0;
+    margin-top: 2px;
+  }
+
+  /* MENU */
+  #scr-menu {
+    background: linear-gradient(160deg, #1a3a5c 0%, #0f2540 60%);
+    justify-content: center;
+    padding-top: 60px;
+  }
+
+  .menu-logo {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .menu-logo h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 52px;
+    font-weight: 900;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+  .menu-logo p {
+    font-size: 15px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 6px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .menu-logo .divider {
+    width: 60px; height: 3px;
+    background: var(--gold);
+    margin: 16px auto;
+    border-radius: 2px;
+  }
+
+  .menu-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* BIG BUTTONS */
+  .big-btn {
+    border: none;
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.12s, filter 0.12s;
+    text-align: left;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .big-btn:active { transform: scale(0.97); filter: brightness(0.9); }
+
+  .big-btn::after {
+    content: '›';
+    position: absolute;
+    right: 24px;
+    font-size: 28px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 300;
+  }
+
+  .big-btn .btn-icon {
+    font-size: 36px;
+    flex-shrink: 0;
+    width: 52px;
+    text-align: center;
+  }
+  .big-btn .btn-text {
+    flex: 1;
+  }
+  .big-btn .btn-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+  }
+  .big-btn .btn-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    display: block;
+    margin-top: 2px;
+  }
+
+  .btn-muzi { background: linear-gradient(135deg, #1e5799, #2e86de); }
+  .btn-zeny { background: linear-gradient(135deg, #922b21, #e74c3c); }
+  .btn-vazeni { background: linear-gradient(135deg, #1a5276, #2471a3); }
+  .btn-bench { background: linear-gradient(135deg, #784212, #d35400); }
+  .btn-trojskok { background: linear-gradient(135deg, #1e8449, #27ae60); }
+  .btn-shyby { background: linear-gradient(135deg, #4a235a, #7d3c98); }
+  .btn-vznosy { background: linear-gradient(135deg, #922b21, #c0392b); }
+  .btn-splh { background: linear-gradient(135deg, #4a235a, #7d3c98); }
+  .btn-hod { background: linear-gradient(135deg, #784212, #d35400); }
+  .btn-lehysedy { background: linear-gradient(135deg, #1a5276, #2471a3); }
+
+  /* FORM */
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .form-input {
+    width: 100%;
+    background: rgba(255,255,255,0.07);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 16px 18px;
+    font-size: 20px;
+    font-family: 'Barlow', sans-serif;
+    font-weight: 500;
+    color: white;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus {
+    border-color: var(--blue-light);
+    background: rgba(255,255,255,0.1);
+  }
+  .form-input::placeholder { color: rgba(255,255,255,0.25); }
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  /* INFO CARD */
+  .info-card {
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .info-card .info-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    line-height: 1.1;
+  }
+  .info-card .info-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 4px;
+  }
+  .info-card.highlight {
+    background: rgba(243, 156, 18, 0.15);
+    border-color: rgba(243, 156, 18, 0.4);
+  }
+  .info-card .info-vaha {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .info-card .info-vaha-label {
+    font-size: 12px;
+    color: rgba(243, 156, 18, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* POKUS ROW */
+  .pokus-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .pokus-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .pokus-group .form-input {
+    font-size: 22px;
+    text-align: center;
+    padding: 14px 8px;
+  }
+
+  /* SUBMIT BTN */
+  .submit-btn {
+    width: 100%;
+    border: none;
+    border-radius: var(--radius);
+    padding: 20px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: white;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: transform 0.12s, filter 0.12s;
+    position: relative;
+    overflow: hidden;
+  }
+  .submit-btn:active { transform: scale(0.97); filter: brightness(0.9); }
+  .submit-btn.green { background: linear-gradient(135deg, var(--green-dark), var(--green)); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--green);
+    color: white;
+    padding: 16px 28px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 1000;
+    white-space: nowrap;
+  }
+  .toast.error { background: var(--red); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* LOADING */
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(15, 37, 64, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { color: white; font-size: 15px; opacity: 0.7; }
+
+  /* AUTH */
+  #scr-auth {
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding-top: 0;
+  }
+  .auth-card {
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    text-align: center;
+    width: 100%;
+  }
+  .auth-card h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 8px;
+  }
+  .auth-card p { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 24px; }
+  .auth-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #1e5799, #2e86de);
+    border: none;
+    border-radius: 12px;
+    padding: 18px;
+    color: white;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .separator { height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- AUTH SCREEN -->
+  <div class="screen active" id="scr-auth">
+    <div class="menu-logo">
+      <h1>Silový<br>čtyřboj</h1>
+      <div class="divider"></div>
+      <p>Systém pro rozhodčí</p>
+    </div>
+    <div class="auth-card">
+      <h2>Přihlášení</h2>
+      <p>Přihlaste se pomocí školního<br>Office 365 účtu</p>
+      <button class="auth-btn" onclick="signIn()">🔐 Přihlásit se</button>
+    </div>
+  </div>
+
+  <!-- MENU -->
+  <div class="screen" id="scr-menu">
+    <div class="menu-logo" style="margin-bottom:36px; padding-top:40px;">
+      <h1>Silový<br>čtyřboj</h1>
+      <div class="divider"></div>
+      <p>Systém pro rozhodčí</p>
+    </div>
+    <div class="menu-btns">
+      <button class="big-btn btn-muzi" onclick="showScreen('scr-muzi')">
+        <span class="btn-icon">👨</span>
+        <span class="btn-text">
+          <span class="btn-label">Muži</span>
+          <span class="btn-sub">Vážení + 4 disciplíny</span>
+        </span>
+      </button>
+      <button class="big-btn btn-zeny" onclick="showScreen('scr-zeny')">
+        <span class="btn-icon">👩</span>
+        <span class="btn-text">
+          <span class="btn-label">Ženy</span>
+          <span class="btn-sub">4 disciplíny</span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MUŽI MENU -->
+  <div class="screen" id="scr-muzi">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showScreen('scr-menu')">←</button>
+      <div class="screen-title">Muži<small>Vyber disciplínu</small></div>
+    </div>
+    <div class="menu-btns">
+      <button class="big-btn btn-vazeni" onclick="showScreen('scr-vazeni')">
+        <span class="btn-icon">⚖️</span>
+        <span class="btn-text">
+          <span class="btn-label">Vážení</span>
+          <span class="btn-sub">Zápis hmotnosti závodníka</span>
+        </span>
+      </button>
+      <div class="separator"></div>
+      <button class="big-btn btn-bench" onclick="showScreen('scr-bench')">
+        <span class="btn-icon">🏋️</span>
+        <span class="btn-text">
+          <span class="btn-label">Bench-press</span>
+          <span class="btn-sub">1 pokus · opakování × 1,5 = body</span>
+        </span>
+      </button>
+      <button class="big-btn btn-trojskok" onclick="showDisciplina('scr-trojskok','M')">
+        <span class="btn-icon">🦘</span>
+        <span class="btn-text">
+          <span class="btn-label">Trojskok</span>
+          <span class="btn-sub">3 pokusy · nejlepší cm → body</span>
+        </span>
+      </button>
+      <button class="big-btn btn-shyby" onclick="showScreen('scr-shyby')">
+        <span class="btn-icon">💪</span>
+        <span class="btn-text">
+          <span class="btn-label">Shyby</span>
+          <span class="btn-sub">1 pokus · opakování × 3 = body</span>
+        </span>
+      </button>
+      <button class="big-btn btn-vznosy" onclick="showScreen('scr-vznosy')">
+        <span class="btn-icon">⬆️</span>
+        <span class="btn-text">
+          <span class="btn-label">Vznosy</span>
+          <span class="btn-sub">1 pokus · opakování × 1,5 = body</span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ŽENY MENU -->
+  <div class="screen" id="scr-zeny">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showScreen('scr-menu')">←</button>
+      <div class="screen-title">Ženy<small>Vyber disciplínu</small></div>
+    </div>
+    <div class="menu-btns">
+      <button class="big-btn btn-trojskok" onclick="showDisciplina('scr-trojskok','Z')">
+        <span class="btn-icon">🦘</span>
+        <span class="btn-text">
+          <span class="btn-label">Trojskok</span>
+          <span class="btn-sub">3 pokusy · nejlepší cm → body</span>
+        </span>
+      </button>
+      <button class="big-btn btn-splh" onclick="showScreen('scr-splh')">
+        <span class="btn-icon">🧗</span>
+        <span class="btn-text">
+          <span class="btn-label">Šplh na tyči</span>
+          <span class="btn-sub">2 pokusy · nejlepší čas → body</span>
+        </span>
+      </button>
+      <button class="big-btn btn-hod" onclick="showScreen('scr-hod')">
+        <span class="btn-icon">🏐</span>
+        <span class="btn-text">
+          <span class="btn-label">Hod míčem</span>
+          <span class="btn-sub">3 pokusy · nejlepší cm → body</span>
+        </span>
+      </button>
+      <button class="big-btn btn-lehysedy" onclick="showScreen('scr-lehysedy')">
+        <span class="btn-icon">🔄</span>
+        <span class="btn-text">
+          <span class="btn-label">Lehy-sedy</span>
+          <span class="btn-sub">1 pokus · opakování = body</span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- VÁŽENÍ -->
+  <div class="screen" id="scr-vazeni">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showScreen('scr-muzi')">←</button>
+      <div class="screen-title">⚖️ Vážení<small>Zápis hmotnosti</small></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Číslo závodníka</label>
+      <input class="form-input" type="number" id="vazeni-cislo" placeholder="1 – 99" min="1" max="99" oninput="lookupZavodnik('vazeni')">
+    </div>
+    <div class="info-card" id="vazeni-jmeno-card">
+      <div class="info-sub">Zadejte číslo závodníka</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hmotnost závodníka (kg)</label>
+      <input class="form-input" type="number" id="vazeni-hmotnost" placeholder="např. 73,5" step="0.1" min="30" max="200" oninput="updateVahaCinky()">
+    </div>
+    <div class="info-card highlight" id="vazeni-vaha-card">
+      <div class="info-sub">Zadejte hmotnost závodníka</div>
+    </div>
+    <button class="submit-btn green" onclick="submitVazeni()">✅ Uložit hmotnost</button>
+  </div>
+
+  <!-- BENCH-PRESS -->
+  <div class="screen" id="scr-bench">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showScreen('scr-muzi')">←</button>
+      <div class="screen-title">🏋️ Bench-press<small>1 pokus</small></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Číslo závodníka</label>
+      <input class="form-input" type="number" id="bench-cislo" placeholder="1 – 99" min="1" max="99" oninput="lookupBench()">
+    </div>
+    <div class="info-card" id="bench-jmeno-card">
+      <div class="info-sub">Zadejte číslo závodníka</div>
+    </div>
+    <div class="info-card highlight" id="bench-vaha-card">
+      <div class="info-sub">Váha činky se zobrazí automaticky</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Počet opakování (0 = neplatný pokus)</label>
+      <input class="form-input" type="number" id="bench-opakovani" placeholder="počet opakování" min="0" max="200">
+    </div>
+    <button class="submit-btn green" onclick="submitBench()">✅ Odeslat výsledek</button>
+  </div>
+
+  <!-- TROJSKOK (sdílený pro M i Ž) -->
+  <div class="screen" id="scr-trojskok">
+    <div class="screen-header">
+      <button class="back-btn" id="trojskok-back" onclick="showScreen('scr-muzi')">←</button>
+      <div class="screen-title">🦘 Trojskok<small id="trojskok-subtitle">3 pokusy · nejlepší cm</small></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="trojskok-cislo-label">Číslo závodníka</label>
+      <input class="form-input" type="number" id="trojskok-cislo" placeholder="číslo závodníka" oninput="lookupZavodnik('trojskok')">
+    </div>
+    <div class="info-card" id="trojskok-jmeno-card">
+      <div class="info-sub">Zadejte číslo závodníka</div>
+    </div>
+    <label class="form-label">Výkony v cm (0 = neplatný pokus)</label>
+    <div class="pokus-row">
+      <div class="pokus-group">
+        <label class="form-label" style="text-align:center">Pokus 1</label>
+        <input class="form-input" type="number" id="trojskok-p1" placeholder="cm" min="0">
+      </div>
+      <div class="pokus-group">
+        <label class="form-label" style="text-align:center">Pokus 2</label>
+        <input class="form-input" type="number" id="trojskok-p2" placeholder="cm" min="0">
+      </div>
+      <div class="pokus-group">
+        <label class="form-label" style="text-align:center">Pokus 3</label>
+        <input class="form-input" type="number" id="trojskok-p3" placeholder="cm" min="0">
+      </div>
+    </div>
+    <button class="submit-btn green" onclick="submitTrojskok()">✅ Odeslat výsledek</button>
+  </div>
+
+  <!-- SHYBY -->
+  <div class="screen" id="scr-shyby">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showScreen('scr-muzi')">←</button>
+      <div class="screen-title">💪 Shyby<small>1 pokus · opakování × 3</small></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Číslo závodníka</label>
+      <input class="form-input" type="number" id="shyby-cislo" placeholder="1 – 99" min="1" max="99" oninput="lookupZavodnik('shyby')">
+    </div>
+    <div class="info-card" id="shyby-jmeno-card">
+      <div class="info-sub">Zadejte číslo závodníka</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Počet opakování (0 = neplatný pokus)</label>
+      <input class="form-input" type="number" id="shyby-opakovani" placeholder="počet opakování" min="0" max="200">
+    </div>
+    <button class="submit-btn green" onclick="submitShyby()">✅ Odeslat výsledek</button>
+  </div>
+
+  <!-- VZNOSY -->
+  <div class="screen" id="scr-vznosy">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showScreen('scr-muzi')">←</button>
+      <div class="screen-title">⬆️ Vznosy<small>1 pokus · opakování × 1,5</small></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Číslo závodníka</label>
+      <input class="form-input" type="number" id="vznosy-cislo" placeholder="1 – 99" min="1" max="99" oninput="lookupZavodnik('vznosy')">
+    </div>
+    <div class="info-card" id="vznosy-jmeno-card">
+      <div class="info-sub">Zadejte číslo závodníka</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Počet opakování (0 = neplatný pokus)</label>
+      <input class="form-input" type="number" id="vznosy-opakovani" placeholder="počet opakování" min="0" max="200">
+    </div>
+    <button class="submit-btn green" onclick="submitVznosy()">✅ Odeslat výsledek</button>
+  </div>
+
+  <!-- ŠPLH -->
+  <div class="screen" id="scr-splh">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showScreen('scr-zeny')">←</button>
+      <div class="screen-title">🧗 Šplh na tyči<small>2 pokusy · nejlepší čas</small></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Číslo závodnice</label>
+      <input class="form-input" type="number" id="splh-cislo" placeholder="101 – 199" min="101" max="199" oninput="lookupZavodnik('splh')">
+    </div>
+    <div class="info-card" id="splh-jmeno-card">
+      <div class="info-sub">Zadejte číslo závodnice</div>
+    </div>
+    <label class="form-label">Časy v sekundách (0 = neplatný pokus)</label>
+    <div class="pokus-row">
+      <div class="pokus-group">
+        <label class="form-label" style="text-align:center">Pokus 1 (s)</label>
+        <input class="form-input" type="number" id="splh-p1" placeholder="s" min="0" step="0.1">
+      </div>
+      <div class="pokus-group">
+        <label class="form-label" style="text-align:center">Pokus 2 (s)</label>
+        <input class="form-input" type="number" id="splh-p2" placeholder="s" min="0" step="0.1">
+      </div>
+    </div>
+    <button class="submit-btn green" onclick="submitSplh()">✅ Odeslat výsledek</button>
+  </div>
+
+  <!-- HOD MÍČEM -->
+  <div class="screen" id="scr-hod">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showScreen('scr-zeny')">←</button>
+      <div class="screen-title">🏐 Hod míčem<small>3 pokusy · nejlepší cm</small></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Číslo závodnice</label>
+      <input class="form-input" type="number" id="hod-cislo" placeholder="101 – 199" min="101" max="199" oninput="lookupZavodnik('hod')">
+    </div>
+    <div class="info-card" id="hod-jmeno-card">
+      <div class="info-sub">Zadejte číslo závodnice</div>
+    </div>
+    <label class="form-label">Výkony v cm (0 = neplatný pokus)</label>
+    <div class="pokus-row">
+      <div class="pokus-group">
+        <label class="form-label" style="text-align:center">Pokus 1</label>
+        <input class="form-input" type="number" id="hod-p1" placeholder="cm" min="0">
+      </div>
+      <div class="pokus-group">
+        <label class="form-label" style="text-align:center">Pokus 2</label>
+        <input class="form-input" type="number" id="hod-p2" placeholder="cm" min="0">
+      </div>
+      <div class="pokus-group">
+        <label class="form-label" style="text-align:center">Pokus 3</label>
+        <input class="form-input" type="number" id="hod-p3" placeholder="cm" min="0">
+      </div>
+    </div>
+    <button class="submit-btn green" onclick="submitHod()">✅ Odeslat výsledek</button>
+  </div>
+
+  <!-- LEHY-SEDY -->
+  <div class="screen" id="scr-lehysedy">
+    <div class="screen-header">
+      <button class="back-btn" onclick="showScreen('scr-zeny')">←</button>
+      <div class="screen-title">🔄 Lehy-sedy<small>1 pokus · 60 sekund</small></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Číslo závodnice</label>
+      <input class="form-input" type="number" id="lehysedy-cislo" placeholder="101 – 199" min="101" max="199" oninput="lookupZavodnik('lehysedy')">
+    </div>
+    <div class="info-card" id="lehysedy-jmeno-card">
+      <div class="info-sub">Zadejte číslo závodnice</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Počet opakování za 60 sekund</label>
+      <input class="form-input" type="number" id="lehysedy-opakovani" placeholder="počet opakování" min="0" max="200">
+    </div>
+    <button class="submit-btn green" onclick="submitLehySedy()">✅ Odeslat výsledek</button>
+  </div>
+
+</div><!-- /app -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Ukládám...</div>
+</div>
+
+<script>
+// =====================================================================
+// KONFIGURACE — UPRAVTE TYTO HODNOTY
+// =====================================================================
+const CONFIG = {
+  clientId: '230502bf-192e-424a-896f-8776e7e35f73',
+  tenantId: 'b2966efc-a02b-4dcd-9475-4f816ddca8e2',
+  // Cesta k souboru na OneDrive — složka/soubor
+  onedrivePath: '/silovy4boj/Silovy_ctyryboj_DATA.xlsx',
+  scopes: ['Files.ReadWrite', 'User.Read']
+};
+
+// =====================================================================
+// MSAL AUTH
+// =====================================================================
+
+
+
+
+
+let msalInstance, accessToken, currentUser;
+let zavodnici = [];
+let vahyCinky = [];
+let trojskokMode = 'M';
+
+window.addEventListener("load", function() { initMsal(); });
+function initMsal() {
+  msalInstance = new msal.PublicClientApplication({
+    auth: {
+      clientId: CONFIG.clientId,
+      authority: `https://login.microsoftonline.com/${CONFIG.tenantId}`,
+      redirectUri: 'https://dukepoleno.github.io/silovy-ctyryboj/'
+    },
+    cache: { cacheLocation: 'sessionStorage' }
+  });
+  msalInstance.handleRedirectPromise().then(resp => {
+    if (resp) onAuthSuccess(resp);
+    else {
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) acquireToken(accounts[0]);
+    }
+  });
+}
+
+async function signIn() {
+  try {
+    await msalInstance.loginRedirect({ scopes: CONFIG.scopes });
+  } catch(e) { showToast('Chyba přihlášení: ' + e.message, true); }
+}
+
+async function acquireToken(account) {
+  try {
+    const resp = await msalInstance.acquireTokenSilent({ scopes: CONFIG.scopes, account });
+    onAuthSuccess(resp);
+  } catch(e) {
+    await msalInstance.acquireTokenRedirect({ scopes: CONFIG.scopes });
+  }
+}
+
+async function onAuthSuccess(resp) {
+  accessToken = resp.accessToken;
+  showLoading('Načítám data...');
+  try {
+    await loadData();
+    showScreen('scr-menu');
+  } catch(e) {
+    showToast('Chyba načítání dat: ' + e.message, true);
+  } finally {
+    hideLoading();
+  }
+}
+
+// =====================================================================
+// GRAPH API
+// =====================================================================
+async function graphRequest(url, method='GET', body=null) {
+  const opts = {
+    method,
+    headers: {
+      'Authorization': 'Bearer ' + accessToken,
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const resp = await fetch('https://graph.microsoft.com/v1.0' + url, opts);
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`Graph API chyba ${resp.status}: ${err}`);
+  }
+  if (resp.status === 204) return null;
+  return resp.json();
+}
+
+async function getFileId() {
+  const data = await graphRequest(`/me/drive/root:${CONFIG.onedrivePath}`);
+  return data.id;
+}
+
+async function getTableRows(fileId, tableName) {
+  const data = await graphRequest(`/me/drive/items/${fileId}/workbook/tables/${tableName}/rows`);
+  return data.value;
+}
+
+async function updateRow(fileId, tableName, rowIndex, values) {
+  await graphRequest(
+    `/me/drive/items/${fileId}/workbook/tables/${tableName}/rows/itemAt(index=${rowIndex})`,
+    'PATCH',
+    { values: [values] }
+  );
+}
+
+async function addRow(fileId, tableName, values) {
+  await graphRequest(
+    `/me/drive/items/${fileId}/workbook/tables/${tableName}/rows/add`,
+    'POST',
+    { values: [values] }
+  );
+}
+
+// =====================================================================
+// DATA LOADING
+// =====================================================================
+let fileId = null;
+
+async function loadData() {
+  fileId = await getFileId();
+  // Načteme závodníky
+  const rows = await getTableRows(fileId, 'Zavodnici');
+  zavodnici = rows.map((r, i) => ({
+    index: i,
+    cislo: r.values[0][0],
+    jmeno: r.values[0][1],
+    prijmeni: r.values[0][2],
+    pohlavi: r.values[0][3],
+    rokNarozeni: r.values[0][4],
+    skola: r.values[0][5],
+    bp_hmotnost: r.values[0][6] || 0
+  }));
+  // Načteme váhy činky
+  const vrows = await getTableRows(fileId, 'VahyCinky');
+  vahyCinky = vrows.map(r => ({
+    od: r.values[0][0],
+    do: r.values[0][1],
+    vaha: r.values[0][2],
+    slozeni: r.values[0][3]
+  }));
+}
+
+// =====================================================================
+// LOOKUP HELPERS
+// =====================================================================
+function findZavodnik(cislo) {
+  return zavodnici.find(z => Number(z.cislo) === Number(cislo));
+}
+
+function findVahaCinky(hmotnost) {
+  return vahyCinky.find(v => hmotnost >= v.od && hmotnost <= v.do);
+}
+
+function setJmenoCard(cardId, zavodnik) {
+  const card = document.getElementById(cardId);
+  if (!zavodnik) {
+    card.innerHTML = '<div class="info-sub">Závodník nenalezen</div>';
+    return;
+  }
+  card.innerHTML = `
+    <div class="info-name">${zavodnik.jmeno} ${zavodnik.prijmeni}</div>
+    <div class="info-sub">${zavodnik.skola} · č. ${zavodnik.cislo}</div>
+  `;
+}
+
+// =====================================================================
+// VÁŽENÍ
+// =====================================================================
+function lookupZavodnik(prefix) {
+  const cislo = document.getElementById(prefix + '-cislo').value;
+  const z = findZavodnik(cislo);
+  setJmenoCard(prefix + '-jmeno-card', z || null);
+  if (prefix === 'vazeni') updateVahaCinky();
+  if (prefix === 'bench') updateBenchVaha();
+}
+
+function updateVahaCinky() {
+  const hmotnost = parseFloat(document.getElementById('vazeni-hmotnost').value);
+  const card = document.getElementById('vazeni-vaha-card');
+  if (!hmotnost || isNaN(hmotnost)) {
+    card.innerHTML = '<div class="info-sub">Zadejte hmotnost závodníka</div>';
+    return;
+  }
+  const v = findVahaCinky(hmotnost);
+  if (v) {
+    card.innerHTML = `
+      <div class="info-vaha">${v.vaha} kg</div>
+      <div class="info-vaha-label">Váha činky · ${v.slozeni}</div>
+    `;
+  } else {
+    card.innerHTML = '<div class="info-sub">Hmotnost mimo tabulku</div>';
+  }
+}
+
+async function submitVazeni() {
+  const cislo = parseInt(document.getElementById('vazeni-cislo').value);
+  const hmotnost = parseFloat(document.getElementById('vazeni-hmotnost').value);
+  if (!cislo || isNaN(hmotnost)) { showToast('Vyplňte všechna pole', true); return; }
+  const z = findZavodnik(cislo);
+  if (!z) { showToast('Závodník nenalezen', true); return; }
+
+  showLoading('Ukládám hmotnost...');
+  try {
+    // Aktualizujeme bp_hmotnost v tabulce Zavodnici
+    const cols = ['CisloZavodnika','Jmeno','Prijmeni','Pohlavi','RokNarozeni','Skola','BP_Hmotnost'];
+    await updateRow(fileId, 'Zavodnici', z.index, [z.cislo, z.jmeno, z.prijmeni, z.pohlavi, z.rokNarozeni, z.skola, hmotnost]);
+    // Aktualizuj lokální cache
+    z.bp_hmotnost = hmotnost;
+    showToast(`✅ ${z.jmeno} ${z.prijmeni}: ${hmotnost} kg uloženo`);
+    document.getElementById('vazeni-hmotnost').value = '';
+    document.getElementById('vazeni-cislo').value = '';
+    document.getElementById('vazeni-jmeno-card').innerHTML = '<div class="info-sub">Zadejte číslo závodníka</div>';
+    document.getElementById('vazeni-vaha-card').innerHTML = '<div class="info-sub">Zadejte hmotnost závodníka</div>';
+  } catch(e) { showToast('Chyba: ' + e.message, true); }
+  finally { hideLoading(); }
+}
+
+// =====================================================================
+// BENCH-PRESS
+// =====================================================================
+function lookupBench() {
+  const cislo = document.getElementById('bench-cislo').value;
+  const z = findZavodnik(cislo);
+  setJmenoCard('bench-jmeno-card', z || null);
+  updateBenchVaha();
+}
+
+function updateBenchVaha() {
+  const cislo = document.getElementById('bench-cislo').value;
+  const z = findZavodnik(cislo);
+  const card = document.getElementById('bench-vaha-card');
+  if (!z || !z.bp_hmotnost) {
+    card.innerHTML = '<div class="info-sub">Závodník nebyl zvážen</div>';
+    return;
+  }
+  const v = findVahaCinky(z.bp_hmotnost);
+  if (v) {
+    card.innerHTML = `
+      <div class="info-vaha">${v.vaha} kg</div>
+      <div class="info-vaha-label">Váha činky · ${v.slozeni}</div>
+    `;
+  } else {
+    card.innerHTML = '<div class="info-sub">Váha mimo tabulku</div>';
+  }
+}
+
+async function submitBench() {
+  const cislo = parseInt(document.getElementById('bench-cislo').value);
+  const opakovani = parseInt(document.getElementById('bench-opakovani').value);
+  if (!cislo || isNaN(opakovani)) { showToast('Vyplňte všechna pole', true); return; }
+  const z = findZavodnik(cislo);
+  if (!z) { showToast('Závodník nenalezen', true); return; }
+  const v = findVahaCinky(z.bp_hmotnost);
+  const vahaCinky = v ? v.vaha : 0;
+  const body = opakovani * 1.5;
+
+  showLoading('Ukládám výsledek...');
+  try {
+    // Najdeme řádek v VysledkyMuzi nebo přidáme nový
+    const rows = await getTableRows(fileId, 'VysledkyMuzi');
+    const rowIdx = rows.findIndex(r => Number(r.values[0][0]) === cislo);
+    const rowData = [cislo, z.jmeno, z.prijmeni, z.skola, z.bp_hmotnost, vahaCinky, opakovani, body,
+      null, null, null, null, null, null, null, null, null, null];
+    if (rowIdx >= 0) {
+      // Zachováme ostatní výsledky
+      const existing = rows[rowIdx].values[0];
+      rowData[8] = existing[8]; rowData[9] = existing[9]; rowData[10] = existing[10]; rowData[11] = existing[11];
+      rowData[12] = existing[12]; rowData[13] = existing[13]; rowData[14] = existing[14]; rowData[15] = existing[15];
+      await updateRow(fileId, 'VysledkyMuzi', rowIdx, rowData);
+    } else {
+      await addRow(fileId, 'VysledkyMuzi', rowData);
+    }
+    showToast(`✅ ${z.jmeno} ${z.prijmeni}: ${opakovani} op. = ${body} bodů`);
+    resetForm(['bench-cislo','bench-opakovani']);
+    document.getElementById('bench-jmeno-card').innerHTML = '<div class="info-sub">Zadejte číslo závodníka</div>';
+    document.getElementById('bench-vaha-card').innerHTML = '<div class="info-sub">Váha činky se zobrazí automaticky</div>';
+  } catch(e) { showToast('Chyba: ' + e.message, true); }
+  finally { hideLoading(); }
+}
+
+// =====================================================================
+// TROJSKOK
+// =====================================================================
+function showDisciplina(screen, mode) {
+  trojskokMode = mode;
+  const subtitle = document.getElementById('trojskok-subtitle');
+  const backBtn = document.getElementById('trojskok-back');
+  const label = document.getElementById('trojskok-cislo-label');
+  if (mode === 'M') {
+    subtitle.textContent = 'Muži · 3 pokusy · nejlepší cm';
+    backBtn.onclick = () => showScreen('scr-muzi');
+    document.getElementById('trojskok-cislo').placeholder = '1 – 99';
+    label.textContent = 'Číslo závodníka';
+  } else {
+    subtitle.textContent = 'Ženy · 3 pokusy · nejlepší cm';
+    backBtn.onclick = () => showScreen('scr-zeny');
+    document.getElementById('trojskok-cislo').placeholder = '101 – 199';
+    label.textContent = 'Číslo závodnice';
+  }
+  showScreen(screen);
+}
+
+async function submitTrojskok() {
+  const cislo = parseInt(document.getElementById('trojskok-cislo').value);
+  const p1 = parseFloat(document.getElementById('trojskok-p1').value) || 0;
+  const p2 = parseFloat(document.getElementById('trojskok-p2').value) || 0;
+  const p3 = parseFloat(document.getElementById('trojskok-p3').value) || 0;
+  if (!cislo) { showToast('Vyplňte číslo závodníka', true); return; }
+  const z = findZavodnik(cislo);
+  if (!z) { showToast('Závodník nenalezen', true); return; }
+
+  const tableName = trojskokMode === 'M' ? 'VysledkyMuzi' : 'VysledkyZeny';
+  showLoading('Ukládám výsledek...');
+  try {
+    const rows = await getTableRows(fileId, tableName);
+    const rowIdx = rows.findIndex(r => Number(r.values[0][0]) === cislo);
+    if (trojskokMode === 'M') {
+      const rowData = rowIdx >= 0 ? [...rows[rowIdx].values[0]] : Array(18).fill(null);
+      rowData[0] = cislo; rowData[1] = z.jmeno; rowData[2] = z.prijmeni; rowData[3] = z.skola;
+      rowData[8] = p1; rowData[9] = p2; rowData[10] = p3;
+      rowIdx >= 0 ? await updateRow(fileId, tableName, rowIdx, rowData) : await addRow(fileId, tableName, rowData);
+    } else {
+      const rowData = rowIdx >= 0 ? [...rows[rowIdx].values[0]] : Array(18).fill(null);
+      rowData[0] = cislo; rowData[1] = z.jmeno; rowData[2] = z.prijmeni; rowData[3] = z.skola;
+      rowData[4] = p1; rowData[5] = p2; rowData[6] = p3;
+      rowIdx >= 0 ? await updateRow(fileId, tableName, rowIdx, rowData) : await addRow(fileId, tableName, rowData);
+    }
+    const nejlepsi = Math.max(p1, p2, p3);
+    showToast(`✅ ${z.jmeno} ${z.prijmeni}: nejlepší ${nejlepsi} cm`);
+    resetForm(['trojskok-cislo','trojskok-p1','trojskok-p2','trojskok-p3']);
+    document.getElementById('trojskok-jmeno-card').innerHTML = '<div class="info-sub">Zadejte číslo závodníka</div>';
+  } catch(e) { showToast('Chyba: ' + e.message, true); }
+  finally { hideLoading(); }
+}
+
+// =====================================================================
+// SHYBY
+// =====================================================================
+async function submitShyby() {
+  const cislo = parseInt(document.getElementById('shyby-cislo').value);
+  const opakovani = parseInt(document.getElementById('shyby-opakovani').value);
+  if (!cislo || isNaN(opakovani)) { showToast('Vyplňte všechna pole', true); return; }
+  const z = findZavodnik(cislo);
+  if (!z) { showToast('Závodník nenalezen', true); return; }
+  const body = opakovani * 3;
+
+  showLoading('Ukládám výsledek...');
+  try {
+    const rows = await getTableRows(fileId, 'VysledkyMuzi');
+    const rowIdx = rows.findIndex(r => Number(r.values[0][0]) === cislo);
+    const rowData = rowIdx >= 0 ? [...rows[rowIdx].values[0]] : Array(18).fill(null);
+    rowData[0] = cislo; rowData[1] = z.jmeno; rowData[2] = z.prijmeni; rowData[3] = z.skola;
+    rowData[12] = opakovani; rowData[13] = body;
+    rowIdx >= 0 ? await updateRow(fileId, 'VysledkyMuzi', rowIdx, rowData) : await addRow(fileId, 'VysledkyMuzi', rowData);
+    showToast(`✅ ${z.jmeno} ${z.prijmeni}: ${opakovani} op. = ${body} bodů`);
+    resetForm(['shyby-cislo','shyby-opakovani']);
+    document.getElementById('shyby-jmeno-card').innerHTML = '<div class="info-sub">Zadejte číslo závodníka</div>';
+  } catch(e) { showToast('Chyba: ' + e.message, true); }
+  finally { hideLoading(); }
+}
+
+// =====================================================================
+// VZNOSY
+// =====================================================================
+async function submitVznosy() {
+  const cislo = parseInt(document.getElementById('vznosy-cislo').value);
+  const opakovani = parseInt(document.getElementById('vznosy-opakovani').value);
+  if (!cislo || isNaN(opakovani)) { showToast('Vyplňte všechna pole', true); return; }
+  const z = findZavodnik(cislo);
+  if (!z) { showToast('Závodník nenalezen', true); return; }
+  const body = opakovani * 1.5;
+
+  showLoading('Ukládám výsledek...');
+  try {
+    const rows = await getTableRows(fileId, 'VysledkyMuzi');
+    const rowIdx = rows.findIndex(r => Number(r.values[0][0]) === cislo);
+    const rowData = rowIdx >= 0 ? [...rows[rowIdx].values[0]] : Array(18).fill(null);
+    rowData[0] = cislo; rowData[1] = z.jmeno; rowData[2] = z.prijmeni; rowData[3] = z.skola;
+    rowData[14] = opakovani; rowData[15] = body;
+    rowIdx >= 0 ? await updateRow(fileId, 'VysledkyMuzi', rowIdx, rowData) : await addRow(fileId, 'VysledkyMuzi', rowData);
+    showToast(`✅ ${z.jmeno} ${z.prijmeni}: ${opakovani} op. = ${body} bodů`);
+    resetForm(['vznosy-cislo','vznosy-opakovani']);
+    document.getElementById('vznosy-jmeno-card').innerHTML = '<div class="info-sub">Zadejte číslo závodníka</div>';
+  } catch(e) { showToast('Chyba: ' + e.message, true); }
+  finally { hideLoading(); }
+}
+
+// =====================================================================
+// ŠPLH
+// =====================================================================
+async function submitSplh() {
+  const cislo = parseInt(document.getElementById('splh-cislo').value);
+  const p1 = parseFloat(document.getElementById('splh-p1').value) || 0;
+  const p2 = parseFloat(document.getElementById('splh-p2').value) || 0;
+  if (!cislo) { showToast('Vyplňte číslo závodnice', true); return; }
+  const z = findZavodnik(cislo);
+  if (!z) { showToast('Závodnice nenalezena', true); return; }
+
+  showLoading('Ukládám výsledek...');
+  try {
+    const rows = await getTableRows(fileId, 'VysledkyZeny');
+    const rowIdx = rows.findIndex(r => Number(r.values[0][0]) === cislo);
+    const rowData = rowIdx >= 0 ? [...rows[rowIdx].values[0]] : Array(18).fill(null);
+    rowData[0] = cislo; rowData[1] = z.jmeno; rowData[2] = z.prijmeni; rowData[3] = z.skola;
+    rowData[8] = p1; rowData[9] = p2;
+    rowIdx >= 0 ? await updateRow(fileId, 'VysledkyZeny', rowIdx, rowData) : await addRow(fileId, 'VysledkyZeny', rowData);
+    const nejlepsi = Math.min(...[p1, p2].filter(x => x > 0));
+    showToast(`✅ ${z.jmeno} ${z.prijmeni}: nejlepší ${nejlepsi} s`);
+    resetForm(['splh-cislo','splh-p1','splh-p2']);
+    document.getElementById('splh-jmeno-card').innerHTML = '<div class="info-sub">Zadejte číslo závodnice</div>';
+  } catch(e) { showToast('Chyba: ' + e.message, true); }
+  finally { hideLoading(); }
+}
+
+// =====================================================================
+// HOD MÍČEM
+// =====================================================================
+async function submitHod() {
+  const cislo = parseInt(document.getElementById('hod-cislo').value);
+  const p1 = parseFloat(document.getElementById('hod-p1').value) || 0;
+  const p2 = parseFloat(document.getElementById('hod-p2').value) || 0;
+  const p3 = parseFloat(document.getElementById('hod-p3').value) || 0;
+  if (!cislo) { showToast('Vyplňte číslo závodnice', true); return; }
+  const z = findZavodnik(cislo);
+  if (!z) { showToast('Závodnice nenalezena', true); return; }
+
+  showLoading('Ukládám výsledek...');
+  try {
+    const rows = await getTableRows(fileId, 'VysledkyZeny');
+    const rowIdx = rows.findIndex(r => Number(r.values[0][0]) === cislo);
+    const rowData = rowIdx >= 0 ? [...rows[rowIdx].values[0]] : Array(18).fill(null);
+    rowData[0] = cislo; rowData[1] = z.jmeno; rowData[2] = z.prijmeni; rowData[3] = z.skola;
+    rowData[11] = p1; rowData[12] = p2; rowData[13] = p3;
+    rowIdx >= 0 ? await updateRow(fileId, 'VysledkyZeny', rowIdx, rowData) : await addRow(fileId, 'VysledkyZeny', rowData);
+    showToast(`✅ ${z.jmeno} ${z.prijmeni}: nejlepší ${Math.max(p1,p2,p3)} cm`);
+    resetForm(['hod-cislo','hod-p1','hod-p2','hod-p3']);
+    document.getElementById('hod-jmeno-card').innerHTML = '<div class="info-sub">Zadejte číslo závodnice</div>';
+  } catch(e) { showToast('Chyba: ' + e.message, true); }
+  finally { hideLoading(); }
+}
+
+// =====================================================================
+// LEHY-SEDY
+// =====================================================================
+async function submitLehySedy() {
+  const cislo = parseInt(document.getElementById('lehysedy-cislo').value);
+  const opakovani = parseInt(document.getElementById('lehysedy-opakovani').value);
+  if (!cislo || isNaN(opakovani)) { showToast('Vyplňte všechna pole', true); return; }
+  const z = findZavodnik(cislo);
+  if (!z) { showToast('Závodnice nenalezena', true); return; }
+
+  showLoading('Ukládám výsledek...');
+  try {
+    const rows = await getTableRows(fileId, 'VysledkyZeny');
+    const rowIdx = rows.findIndex(r => Number(r.values[0][0]) === cislo);
+    const rowData = rowIdx >= 0 ? [...rows[rowIdx].values[0]] : Array(18).fill(null);
+    rowData[0] = cislo; rowData[1] = z.jmeno; rowData[2] = z.prijmeni; rowData[3] = z.skola;
+    rowData[15] = opakovani;
+    rowIdx >= 0 ? await updateRow(fileId, 'VysledkyZeny', rowIdx, rowData) : await addRow(fileId, 'VysledkyZeny', rowData);
+    showToast(`✅ ${z.jmeno} ${z.prijmeni}: ${opakovani} opakování`);
+    resetForm(['lehysedy-cislo','lehysedy-opakovani']);
+    document.getElementById('lehysedy-jmeno-card').innerHTML = '<div class="info-sub">Zadejte číslo závodnice</div>';
+  } catch(e) { showToast('Chyba: ' + e.message, true); }
+  finally { hideLoading(); }
+}
+
+// =====================================================================
+// UI HELPERS
+// =====================================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function resetForm(ids) {
+  ids.forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+}
+
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '');
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function showLoading(msg='Ukládám...') {
+  document.querySelector('.loading-text').textContent = msg;
+  document.getElementById('loading').classList.add('show');
+}
+
+function hideLoading() {
+  document.getElementById('loading').classList.remove('show');
+}
+</script>
+</body>
+</html>
